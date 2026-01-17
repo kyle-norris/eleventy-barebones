@@ -1,0 +1,4 @@
+dist/
+**/*.min.css
+**/*.min.js
+package-lock.json
