@@ -4,10 +4,11 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ meta.title }}</title>
-        <link rel="stylesheet" href="/assets/styles/app.css" />
+        <link rel="stylesheet" href="{{ '/assets/styles/bootstrap.min.css' | relative }}" />
+        <link rel="stylesheet" href="{{ 'src/assets/styles/app.scss' | hash | relative }}" />
     </head>
     <body>
         {{ content | safe }}
-        <script src="/assets/js/app.js"></script>
+        <script src="{{ 'src/assets/js/app.js' | hash | relative }}"></script>
     </body>
 </html>

@@ -1,71 +1,46 @@
-import * as esbuild from 'esbuild';
-import * as sass from 'sass';
 import path from 'node:path';
+import hash from './src/data/hash.json' with { type: 'json' };
+import { HtmlBasePlugin } from '@11ty/eleventy';
+
+const isProd = process.env.ELEVENTY_ENV == 'production';
 
 export default async function (eleventyConfig) {
     eleventyConfig.setServerOptions({
         port: 8000,
     });
 
-    // Process SCSS Files
-    eleventyConfig.addTemplateFormats('scss');
+    eleventyConfig.addPlugin(HtmlBasePlugin);
+
     eleventyConfig.addWatchTarget('./src/assets/styles');
-    eleventyConfig.addExtension('scss', {
-        outputFileExtension: 'css',
+    eleventyConfig.addWatchTarget('./src/assets/js');
 
-        // opt-out of Eleventy layouts
-        useLayouts: false,
+    eleventyConfig.addPassthroughCopy('src/assets/styles/bootstrap.min.css');
+    eleventyConfig.addPassthroughCopy('src/assets/img/');
 
-        compile: async function (inputContent, inputPath) {
-            let parsed = path.parse(inputPath);
-            // Don’t compile file names that start with an underscore
-            if (parsed.name.startsWith('_')) {
-                return;
-            }
-
-            let result = sass.compileString(inputContent, {
-                loadPaths: [parsed.dir || '.', this.config.dir.includes],
-            });
-
-            // Map dependencies for incremental builds
-            this.addDependencies(inputPath, result.loadedUrls);
-
-            return async (data) => {
-                return result.css;
-            };
-        },
+    // Transforms absolute URLs into relative URLs
+    eleventyConfig.addFilter('relative', function (url) {
+        return path.posix.join(
+            './',
+            this.ctx.page.url.split('/').reduce((a, b) => a + (b && '../')),
+            url,
+        );
     });
 
-    // Process JavaScript files
-    eleventyConfig.addTemplateFormats('js');
-    eleventyConfig.addExtension('js', {
-        outputFileExtension: 'js',
-        compile: async (inputContent, inputPath) => {
-            // Don't process if it's not our entrypoint
-            if (inputPath !== './src/assets/js/app.js') {
-                return;
+    // If in production and asset file names are hashed, replace with hashed versions
+    eleventyConfig.addFilter('hash', function (filePath) {
+        if (isProd) {
+            if (filePath in hash) {
+                return hash[filePath].replace('dist', '');
             }
+        }
 
-            return async () => {
-                let output = await esbuild.build({
-                    target: 'es2020',
-                    entryPoints: [inputPath],
-                    minify: true,
-                    bundle: true,
-                    write: false,
-                    metafile: true,
-                });
-
-                var sourceMap = {};
-                for (const [outputPath, { entryPoint }] of Object.entries(output.metafile.outputs)) {
-                    sourceMap[entryPoint] = outputPath.replace('src/', '');
-                }
-
-                eleventyConfig.addGlobalData('sourceMap', sourceMap);
-
-                return output.outputFiles[0].text;
-            };
-        },
+        if (filePath.endsWith('.scss')) {
+            filePath = filePath.replace('.scss', '.css');
+        }
+        if (filePath.startsWith('src/')) {
+            filePath = filePath.slice(3);
+        }
+        return filePath;
     });
 
     return {
@@ -76,6 +51,7 @@ export default async function (eleventyConfig) {
             data: 'data',
             includes: 'includes',
         },
+        pathPrefix: '.',
         templateFormats: ['njk', 'md'],
         htmlTemplateEnjine: 'njk',
         markdownTemplateEngine: 'md',
