@@ -1,21 +1,54 @@
 import path from 'node:path';
-import hash from './src/data/hash.json' with { type: 'json' };
+import hash from './src/_data/hash.json' with { type: 'json' };
 import { HtmlBasePlugin } from '@11ty/eleventy';
+import { build_assets, rebuild_assets } from './esbuild.js';
 
 const isProd = process.env.ELEVENTY_ENV == 'production';
+const ASSETS_TO_WATCH = ['.scss', '.js']; // extensions that will trigger esbuild to rebuild
+let build_ctx;
 
 export default async function (eleventyConfig) {
     eleventyConfig.setServerOptions({
         port: 8000,
     });
 
+    // Plugins
     eleventyConfig.addPlugin(HtmlBasePlugin);
 
-    eleventyConfig.addWatchTarget('./src/assets/styles');
-    eleventyConfig.addWatchTarget('./src/assets/js');
+    // Watch targets
+    eleventyConfig.addWatchTarget('./src/_assets/styles');
+    eleventyConfig.addWatchTarget('./src/_assets/js');
 
-    eleventyConfig.addPassthroughCopy('src/assets/styles/bootstrap.min.css');
-    eleventyConfig.addPassthroughCopy('src/assets/img/');
+    // Passthrough
+    eleventyConfig.addPassthroughCopy('src/_assets/styles/bootstrap.min.css');
+    eleventyConfig.addPassthroughCopy('src/_assets/img/');
+
+    eleventyConfig.on('eleventy.before', async () => {
+        if (isProd) {
+            await build_assets();
+        } else {
+            build_ctx = await rebuild_assets(build_ctx);
+        }
+    });
+
+    // if (process.env.ELEVENTY_RUN_MODE === "serve") {
+    //     // Run once before eleventy starts watching files
+    //     build_ctx = await rebuild_assets(build_ctx);
+    // }
+
+    eleventyConfig.on('eleventy.beforeWatch', async (changedFiles) => {
+        var rebuild = false;
+        for (const name of changedFiles) {
+            if (ASSETS_TO_WATCH.some((extension) => name.endsWith(extension))) {
+                rebuild = true;
+                break;
+            }
+        }
+
+        if (rebuild) {
+            build_ctx = await rebuild_assets(build_ctx);
+        }
+    });
 
     // Transforms absolute URLs into relative URLs
     eleventyConfig.addFilter('relative', function (url) {
@@ -47,9 +80,9 @@ export default async function (eleventyConfig) {
         dir: {
             input: 'src',
             output: 'dist',
-            layouts: 'layouts',
-            data: 'data',
-            includes: 'includes',
+            layouts: '_layouts',
+            data: '_data',
+            includes: '_includes',
         },
         pathPrefix: '.',
         templateFormats: ['njk', 'md'],

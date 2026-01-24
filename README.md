@@ -12,13 +12,13 @@
     - The JS and CSS files are automatically appended with hashes during the `build` command. These hashed filenames are inserted into the final HTML using a custom 11ty filter called `hash`:
 
 ```
-<script src="{{ 'src/assets/js/app.js' | hash }}"></script>
+<script src="{{ 'src/_assets/js/app.js' | hash }}"></script>
 ```
 
 will turn into this:
 
 ```
-<script src="assets/js/app.MAEY36TZ.js"></script>
+<script src="_assets/js/app.MAEY36TZ.js"></script>
 ```
 
 ## Code quality

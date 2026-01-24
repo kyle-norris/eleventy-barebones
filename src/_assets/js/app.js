@@ -3,4 +3,5 @@ import bootstrap from 'bootstrap';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Hello World!');
+    console.log(process.env.ELEVENTY_ENV);
 });
