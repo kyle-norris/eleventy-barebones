@@ -31,22 +31,18 @@ const settings = {
 };
 
 export async function rebuild_assets(ctx) {
-    let result = null;
-
     if (ctx) {
-        result = await ctx.rebuild();
+        await ctx.rebuild();
     } else {
         ctx = await esbuild.context(settings);
-        result = await ctx.rebuild();
+        await ctx.rebuild();
     }
-
     return ctx;
 }
 
 export async function build_assets() {
     let result = await esbuild.build(settings);
 
-    var map = {};
     var map = {};
     for (const [finalName, { entryPoint }] of Object.entries(result.metafile.outputs)) {
         map[entryPoint] = finalName;

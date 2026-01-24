@@ -8,7 +8,9 @@ layout: default.njk
             <a class="btn btn-primary" href="{{ 'posts/post1' | relative }}"> Post 1 </a>
             <h1 class="mt-4">11ty Barebones</h1>
 
-            <img class="home-image" src="{{ '/_assets/img/robot.jpg' | relative }}" alt="" />
+            <div class="robot-image">
+                {% image 'src/_assets/img/robot.jpg', "robot", [300, 600, 1200], "(max-width: 900px) 300px, 600px" %}
+            </div>
         </div>
     </div>
 </div>

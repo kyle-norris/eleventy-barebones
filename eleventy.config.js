@@ -1,7 +1,9 @@
-import path from 'node:path';
-import hash from './src/_data/hash.json' with { type: 'json' };
 import { HtmlBasePlugin } from '@11ty/eleventy';
 import { build_assets, rebuild_assets } from './esbuild.js';
+
+import { process_image } from './eleventy_config/shortcodes/image.js';
+import { relative_path } from './eleventy_config/filters/relative.js';
+import { hash_assets } from './eleventy_config/filters/hash.js';
 
 const isProd = process.env.ELEVENTY_ENV == 'production';
 const ASSETS_TO_WATCH = ['.scss', '.js']; // extensions that will trigger esbuild to rebuild
@@ -23,6 +25,14 @@ export default async function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy('src/_assets/styles/bootstrap.min.css');
     eleventyConfig.addPassthroughCopy('src/_assets/img/');
 
+    // Filters
+    eleventyConfig.addFilter('relative', relative_path);
+    eleventyConfig.addFilter('hash', hash_assets);
+
+    // Shortcodes
+    eleventyConfig.addShortcode('image', process_image);
+
+    // Runs once before Eleventy builds
     eleventyConfig.on('eleventy.before', async () => {
         if (isProd) {
             await build_assets();
@@ -31,11 +41,7 @@ export default async function (eleventyConfig) {
         }
     });
 
-    // if (process.env.ELEVENTY_RUN_MODE === "serve") {
-    //     // Run once before eleventy starts watching files
-    //     build_ctx = await rebuild_assets(build_ctx);
-    // }
-
+    // Runs each time Eleventy rebuilds during watch
     eleventyConfig.on('eleventy.beforeWatch', async (changedFiles) => {
         var rebuild = false;
         for (const name of changedFiles) {
@@ -48,32 +54,6 @@ export default async function (eleventyConfig) {
         if (rebuild) {
             build_ctx = await rebuild_assets(build_ctx);
         }
-    });
-
-    // Transforms absolute URLs into relative URLs
-    eleventyConfig.addFilter('relative', function (url) {
-        return path.posix.join(
-            './',
-            this.ctx.page.url.split('/').reduce((a, b) => a + (b && '../')),
-            url,
-        );
-    });
-
-    // If in production and asset file names are hashed, replace with hashed versions
-    eleventyConfig.addFilter('hash', function (filePath) {
-        if (isProd) {
-            if (filePath in hash) {
-                return hash[filePath].replace('dist', '');
-            }
-        }
-
-        if (filePath.endsWith('.scss')) {
-            filePath = filePath.replace('.scss', '.css');
-        }
-        if (filePath.startsWith('src/')) {
-            filePath = filePath.slice(3);
-        }
-        return filePath;
     });
 
     return {
