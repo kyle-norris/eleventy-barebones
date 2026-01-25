@@ -1,29 +1,67 @@
 # Eleventy (11ty) Barebones Setup
 
-### This is my setup for a fully functional static site generator using 11ty, including a full asset pipeline for JS and SCSS.
+### This is my version of a full 11ty barebones setup, perfect for starting any project.
 
-## Features
+## The Highlights
 
-- Support for SCSS
-    - <b>esbuild</b> is used to transform SCSS into CSS
-- Support for ES6 JavaScript
-    - <b>esbuild</b> is used to transpile and bundle JavaScript files
-- Cache Busting
-    - The JS and CSS files are automatically appended with hashes during the `build` command. These hashed filenames are inserted into the final HTML using a custom 11ty filter called `hash`:
+- `esbuild` for transforming and bundling both JS and SCSS
+- `PostCSS` for autoprefixing CSS files
+- Automatic cache busting
+    - The JS and CSS files are automatically appended with hashes during the `build` command. These hashed filenames are inserted into the final HTML using a custom filter called `hash`:
 
-```
-<script src="{{ 'src/_assets/js/app.js' | hash }}"></script>
-```
+        so this:
 
-will turn into this:
+        ```html
+        <script src="{{ 'src/_assets/js/app.js' | hash }}"></script>
+        ```
 
-```
-<script src="_assets/js/app.MAEY36TZ.js"></script>
-```
+        turns into this:
 
-## Code quality
+        ```html
+        <script src="_assets/js/app.MAEY36TZ.js"></script>
+        ```
 
-- ESLint is used to check JavaScript files during the 'build' command
-    - can also be run with `npm run lint`
-- Prettier is used for code formatting
-    - can be run with `npm run format`
+- Image optimization
+    - Images can be optionally transformed using eleventy's `@11ty/eleventy-img` plugin by using the shortcode `image`:
+
+        so this:
+
+        ```jinja
+        {% image 'src/_assets/img/robot.jpg', "robot", [300, 600, 1200], "(max-width: 900px) 300px, (max-width: 1200px) 600px, 1200px" %}
+        ```
+
+        turns into this:
+
+        ```html
+        <img
+            alt="robot"
+            loading="lazy"
+            decoding="async"
+            src="_assets/img/gdkjawuj_U-300.jpeg"
+            width="1200"
+            height="1367"
+            srcset="
+                _assets/img/gdkjawuj_U-300.jpeg   300w,
+                _assets/img/gdkjawuj_U-600.jpeg   600w,
+                _assets/img/gdkjawuj_U-1200.jpeg 1200w
+            "
+            sizes="(max-width: 900px) 300px, (max-width: 1200px) 600px, 1200px"
+        />
+        ```
+
+- `ESLint` for checking JS files
+    - runs automatically during the `build` command
+- `Prettier` for code formatting
+
+## NPM commands
+
+- `npm run start`
+    - start local dev server
+- `npm run build`
+    - build production output
+- `npm run clean`
+    - remove `dist` output directory
+- `npm run format`
+    - run `Prettier` to check code formatting
+- `npm run lint`
+    - run `ESLint` to check for JS quality

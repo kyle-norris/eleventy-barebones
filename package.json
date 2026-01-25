@@ -12,9 +12,7 @@
         "clean": "del-cli dist",
         "browser": "opener http://localhost:8000",
         "format": "npx prettier . --write",
-        "lint": "npx eslint .",
-        "js:prod": "cross-env ELEVENTY_ENV=production node esbuild.js",
-        "js:dev": "cross-env ELEVENTY_ENV=development node esbuild.js"
+        "lint": "npx eslint ."
     },
     "repository": {
         "type": "git",
